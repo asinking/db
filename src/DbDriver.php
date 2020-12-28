@@ -217,11 +217,6 @@ abstract class DbDriver
     abstract protected function getDbConfig(): array;
 
     /**
-     * @return mixed
-     */
-    abstract protected function setDbConfig(array $config);
-
-    /**
      * 获取慢查询时间
      * @return int
      */

@@ -56,8 +56,7 @@ class SimpleDb extends DbDriver
     }
 
     /**
-     * @return DbDriver
-     * @throws \Exception
+     * @return SimpleDb
      */
     public static function query()
     {
