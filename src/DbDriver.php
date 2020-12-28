@@ -31,6 +31,8 @@ abstract class DbDriver
         }
         try {
             $config = $this->getDbConfig();
+            $config['dsn'] = "mysql:host={$config['host']};port={$config['port']};dbname={$config['database']};charset=utf8";
+            $config['options'] = [PDO::ATTR_TIMEOUT => 1];
             $this->pdo = new PDO($config['dsn'], $config['username'], $config['passwd'], $config['options']);
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(PDO::ATTR_CASE, PDO::CASE_NATURAL);
@@ -46,7 +48,6 @@ abstract class DbDriver
         }
         return $this->pdo;
     }
-
 
 
     /**
@@ -138,15 +139,14 @@ abstract class DbDriver
             return ['cost' => $cost, 'result' => $result];
         } catch (\PDOException $e) {
             if ($this->hasLostConnection($e) && $retry < 3) {
-                DbLogUtil::warning("[asinking/db] Database reconnect...", 'asinking-db.log');
+                DbLogUtil::info("[asinking/db] Database reconnect...");
                 $this->pdo = null;
                 return $this->execute($sql, $params, $mode, $prepare, ++$retry);
             } else {
-                $error = $this->getLastError();
-                $errorMessage = '[' . $error->getMessage() . '][' . $sql . ']' . json_encode($params);
+                $error = $e->getMessage();
                 $action = $prepare ? 'prepare' : 'query';
-                DbLogUtil::error("[asinking/db] Database {$action} failed {$errorMessage}");
-                throw new \Exception("Database {$action} failed {$errorMessage}", 10001);
+//                DbLogUtil::error("[asinking/db] Database {$action} failed {$error}");
+                throw new \Exception("[asinking/db] Database {$action} failed {$error}", 10001);
             }
         }
     }
@@ -207,7 +207,8 @@ abstract class DbDriver
     {
         $error = $this->getLastError();
         $errorMessage = '[' . $error->getMessage() . '][' . $sql . ']' . json_encode($params);
-        throw new \PDOException("Database {$action} failed", 10001);
+        DbLogUtil::info($errorMessage);
+        throw new \PDOException("Database {$action} failed {$errorMessage}", 10001);
     }
 
     /**
