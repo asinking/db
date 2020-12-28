@@ -1,0 +1,20 @@
+{
+    "name": "asinking/db",
+    "description": "this is simple db",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "xiaoqiang",
+            "email": "liuqiang@asinking.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {},
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://packagist.org"
+        }
+    }
+}
