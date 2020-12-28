@@ -9,12 +9,16 @@ abstract class DbDriver
     /**
      * @var PDO
      */
-    private $pdo;
+    private $_pdo;
 
     /**
      * @var \PDOStatement
      */
-    private $statement;
+    private $_statement;
+    /**
+     * @var int
+     */
+    private $_retryNum = 3;
 
     public function __construct()
     {
@@ -26,27 +30,27 @@ abstract class DbDriver
      */
     private function pdo($retry = 0)
     {
-        if ($this->pdo) {
-            return $this->pdo;
+        if ($this->_pdo) {
+            return $this->_pdo;
         }
         try {
             $config = $this->getDbConfig();
             $config['dsn'] = "mysql:host={$config['host']};port={$config['port']};dbname={$config['database']};charset=utf8";
             $config['options'] = [PDO::ATTR_TIMEOUT => 1];
-            $this->pdo = new PDO($config['dsn'], $config['username'], $config['passwd'], $config['options']);
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->pdo->setAttribute(PDO::ATTR_CASE, PDO::CASE_NATURAL);
-            $this->pdo->setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_NATURAL);
-            $this->pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
-            $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+            $this->_pdo = new PDO($config['dsn'], $config['username'], $config['passwd'], $config['options']);
+            $this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->_pdo->setAttribute(PDO::ATTR_CASE, PDO::CASE_NATURAL);
+            $this->_pdo->setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_NATURAL);
+            $this->_pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
+            $this->_pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         } catch (\PDOException $e) {
-            if ($retry < 3) {
-                $this->pdo = null;
+            if ($retry < $this->_retryNum) {
+                $this->_pdo = null;
                 return $this->pdo(++$retry);
             }
             throw $e;
         }
-        return $this->pdo;
+        return $this->_pdo;
     }
 
 
@@ -75,16 +79,16 @@ abstract class DbDriver
      */
     public function getLastError()
     {
-        if (!$this->pdo) {
+        if (!$this->_pdo) {
             return new \Error('', 0);
         }
 
         $errorInfo = null;
-        if ($this->statement) {
-            $errorInfo = $this->statement->errorInfo();
+        if ($this->_statement) {
+            $errorInfo = $this->_statement->errorInfo();
         }
         if (!$errorInfo || !$errorInfo[2]) {
-            $errorInfo = $this->pdo->errorInfo();
+            $errorInfo = $this->_pdo->errorInfo();
         }
 
         if ($errorInfo) {
@@ -114,33 +118,33 @@ abstract class DbDriver
         try {
             $time = microtime(true);
             if ($prepare) {
-                $this->statement = $this->pdo()->prepare($sql);
+                $this->_statement = $this->pdo()->prepare($sql);
             } else {
-                $this->statement = $this->pdo()->query($sql);
+                $this->_statement = $this->pdo()->query($sql);
             }
-            if (!$this->statement) {
+            if (!$this->_statement) {
                 $this->error($sql, $params, $prepare ? 'prepare' : 'query');
             }
             if ($prepare) {
-                $result = $this->statement->execute($params);
+                $result = $this->_statement->execute($params);
                 if (!$result) {
                     $this->error($sql, $params, 'execute');
                 }
             }
             //慢查询日志
-            $row_count = $this->statement->rowCount();
+            $row_count = $this->_statement->rowCount();
             $cost = (int)((microtime(true) - $time) * 1000);
             if ($cost > $this->getDbSlowTime()) {
                 $log = array('cost' => $cost, 'sql' => $sql, 'params' => $params, 'rows' => $row_count);
                 DbLogUtil::warning($log, 'db-slow.log');
             }
             $result = $this->fetchResult($mode);
-            $this->pdo->null;
+            $this->_pdo->null;
             return ['cost' => $cost, 'result' => $result];
         } catch (\PDOException $e) {
-            if ($this->hasLostConnection($e) && $retry < 3) {
+            if ($this->hasLostConnection($e) && $retry < $this->_retryNum) {
                 DbLogUtil::info("[asinking/db] Database reconnect...");
-                $this->pdo = null;
+                $this->_pdo = null;
                 return $this->execute($sql, $params, $mode, $prepare, ++$retry);
             } else {
                 $error = $e->getMessage();
@@ -158,19 +162,19 @@ abstract class DbDriver
      */
     private function fetchResult($mode)
     {
-        $row_count = $this->statement->rowCount();
+        $row_count = $this->_statement->rowCount();
 
         if ($mode == DbResults::AFFECTED_ROWS) {
             return $row_count;
         }
         if ($mode == DbResults::FETCH_ONE) {
-            return $row_count ? $this->statement->fetch(PDO::FETCH_ASSOC) : array();
+            return $row_count ? $this->_statement->fetch(PDO::FETCH_ASSOC) : array();
         }
         if ($mode == DbResults::FETCH_ALL) {
-            return $row_count ? $this->statement->fetchAll(PDO::FETCH_ASSOC) : array();
+            return $row_count ? $this->_statement->fetchAll(PDO::FETCH_ASSOC) : array();
         }
         if ($mode == DbResults::STATEMENT) {
-            return $this->statement;
+            return $this->_statement;
         }
         return 0;
     }
