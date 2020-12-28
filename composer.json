@@ -16,5 +16,10 @@
             "type": "composer",
             "url": "https://packagist.org"
         }
+    },
+    "autoload": {
+        "psr-4": {
+            "asinking\\db\\": "src/"
+        }
     }
 }
