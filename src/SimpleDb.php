@@ -37,6 +37,16 @@ class SimpleDb extends DbDriver
     }
 
     /**
+     * @param array $config
+     * @return $this|mixed
+     */
+    protected function setDbConfig(array $config)
+    {
+         $this->config=$config;
+         return $this;
+    }
+
+    /**
      * 慢查询时间
      * @return int
      */
@@ -44,4 +54,6 @@ class SimpleDb extends DbDriver
     {
         return $this->slowTime;
     }
+
+
 }
