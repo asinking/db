@@ -47,14 +47,7 @@ abstract class DbDriver
         return $this->pdo;
     }
 
-    /**
-     * @return DbDriver
-     * @throws \Exception
-     */
-    public static function query()
-    {
-        return new static();
-    }
+
 
     /**
      * 查询参数过滤

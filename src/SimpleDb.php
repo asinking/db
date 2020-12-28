@@ -55,5 +55,13 @@ class SimpleDb extends DbDriver
         return $this->slowTime;
     }
 
+    /**
+     * @return DbDriver
+     * @throws \Exception
+     */
+    public static function query()
+    {
+        return new static();
+    }
 
 }
