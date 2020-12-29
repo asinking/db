@@ -35,9 +35,9 @@ abstract class DbDriver
         }
         try {
             $config = $this->getDbConfig();
-            $config['dsn'] = "mysql:host={$config['host']};port={$config['port']};dbname={$config['database']};charset=utf8";
+            $config['dsn'] = "mysql:host={$config['host']};port={$config['port']};dbname={$config['dbName']};charset=utf8";
             $config['options'] = [PDO::ATTR_TIMEOUT => 1];
-            $this->_pdo = new PDO($config['dsn'], $config['username'], $config['passwd'], $config['options']);
+            $this->_pdo = new PDO($config['dsn'], $config['username'], $config['pwd'], $config['options']);
             $this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->_pdo->setAttribute(PDO::ATTR_CASE, PDO::CASE_NATURAL);
             $this->_pdo->setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_NATURAL);
