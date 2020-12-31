@@ -3,9 +3,6 @@
 ## 查询操作
 ```javascript
 
-DbResults::AFFECTED_ROWS  #查询结果条数
-DbResults::FETCH_ALL      #查询结果集
-
 SimpleDb::query()->setDbConfig([
             'host' => '127.0.0.2107',
             'port'=> '3306',
@@ -13,4 +10,11 @@ SimpleDb::query()->setDbConfig([
             'username' => 'test',
             'pwd' => 'test123',
         ])->execute("SELECT * FROM dc_app",[],DbResults::AFFECTED_ROWS)
+        
+DbResults::AFFECTED_ROWS  #查询结果条数
+DbResults::FETCH_ALL      #查询结果集        
+。。。更多可参考内部方法
+
 ```
+
+
